@@ -61,6 +61,8 @@ TEST_F(CStringListTest, CopyConstructor) {
     EXPECT_EQ(*it, "Hello");
     ++it;
     EXPECT_EQ(*it, "World");
+
+    //todo проверить равенство
 }
 
 // Test move constructor
@@ -93,7 +95,8 @@ TEST_F(CStringListTest, CopyAssignmentOperator) {
     EXPECT_EQ(*it, "Hello");
     ++it;
     EXPECT_EQ(*it, "World");
-}
+}    //todo проверить равенство
+
 
 // Test move assignment operator
 TEST_F(CStringListTest, MoveAssignmentOperator) {
@@ -168,12 +171,14 @@ TEST_F(CStringListTest, Iterators) {
     EXPECT_EQ(it, list.end());
 
     auto rit = list.rbegin();
-    EXPECT_EQ(*rit, "World");
-    rit++;
-    EXPECT_EQ(*rit, "Hello");
-    rit++;
+    EXPECT_EQ(rit.node->data, "World");
+    ++rit;
+    EXPECT_EQ(rit.node->data, "Hello");
+    ++rit;
     EXPECT_EQ(rit, list.rend());
-}
+} //todo test iterators
+//todo test совпместимость с стл алгоритмами итераторы и for
+//todo
 
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);

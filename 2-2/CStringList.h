@@ -17,14 +17,15 @@ class CStringList {
 private:
     struct Node {
         std::string data;
-        std::unique_ptr<Node> next;
-        Node* prev;
+        std::shared_ptr<Node> next;
+        std::shared_ptr<Node> prev;
 
-        explicit Node(std::string  str) : data(std::move(str)), next(nullptr), prev(nullptr) {}
+        //move
+        explicit Node(std::string str): data(std::move(str)), next(nullptr), prev(nullptr) {}
     };
 
-    std::unique_ptr<Node> head;
-    Node* tail;
+    std::shared_ptr<Node> head;
+    std::shared_ptr<Node> tail;
     size_t size;
 
     void Clear() noexcept {
@@ -81,28 +82,28 @@ public:
 
     // Add a string to the beginning of the list
     void AddToBeginning(const std::string& str) {
-        auto newNode = std::make_unique<Node>(str);
+        auto newNode = std::make_shared<Node>(str);
         newNode->next = std::move(head);
         if (newNode->next) {
-            newNode->next->prev = newNode.get();
+            newNode->next->prev = newNode;
         }
         head = std::move(newNode);
         if (!tail) {
-            tail = head.get();
+            tail = head;
         }
         ++size;
     }
 
     // Add a string to the end of the list
     void AddToEnd(const std::string& str) {
-        auto newNode = std::make_unique<Node>(str);
+        auto newNode = std::make_shared<Node>(str);
         newNode->prev = tail;
         if (tail) {
             tail->next = std::move(newNode);
-            tail = tail->next.get();
+            tail = tail->next;
         } else {
             head = std::move(newNode);
-            tail = head.get();
+            tail = head;
         }
         ++size;
     }
@@ -142,7 +143,7 @@ public:
             return &node->data;
         }
 
-        Iterator& operator++() {
+        Iterator operator++() {
             node = node->next.get();
             return *this;
         }
@@ -153,7 +154,7 @@ public:
             return temp;
         }
 
-        Iterator& operator--() {
+        Iterator operator--() {
             node = node->prev.get();
             return *this;
         }
@@ -169,6 +170,58 @@ public:
         }
 
         bool operator!=(const Iterator& other) const {
+            return node != other.node;
+        }
+
+        Node* node;
+    };
+ // Iterator class
+    class ReverseIterator {
+
+    public:
+        using iterator_category = std::bidirectional_iterator_tag;
+        using value_type = std::string;
+        using difference_type = std::ptrdiff_t;
+        using pointer = std::string*;
+        using reference = std::string&;
+
+        explicit ReverseIterator(Node* node) : node(node) {}
+
+        reference operator*() const {
+            return node->data;
+        }
+
+        pointer operator->() const {
+            return &node->data;
+        }
+
+        ReverseIterator operator--() {
+            node = node->next.get();
+            return *this;
+        }
+
+        ReverseIterator operator--(int) {
+            ReverseIterator temp = *this;
+            ++(*this);
+            return temp;
+        }
+
+        ReverseIterator operator++() {
+            node = node->prev.get();
+            return *this;
+        }
+
+        ReverseIterator operator++(int) {
+            ReverseIterator temp = *this;
+            --(*this);
+            return temp;
+        }
+
+        bool operator==(const ReverseIterator& other) const {
+            return node == other.node;
+        }
+
+        bool operator!=(const ReverseIterator& other) const {
             return node != other.node;
         }
 
@@ -209,7 +262,7 @@ public:
         }
 
         ConstIterator& operator--() {
-            node = node->prev;
+            node = node->prev.get();
             return *this;
         }
 
@@ -249,13 +302,13 @@ public:
     }
 
     // Get reverse iterator to the beginning
-    std::reverse_iterator<Iterator> rbegin() {
-        return std::reverse_iterator<Iterator>(end());
+    ReverseIterator rbegin() {
+        return ReverseIterator(tail.get());
     }
 
-    // Get reverse iterator to the end
-    std::reverse_iterator<Iterator> rend() {
-        return std::reverse_iterator<Iterator>(begin());
+    // Get reverse iterator to the end            //todo вынести реализацию в cpp
+    ReverseIterator rend() {
+        return ReverseIterator(nullptr);
     }
 
     // Get const reverse iterator to the beginning
@@ -275,16 +328,16 @@ public:
             return begin();
         } else if (pos == end()) {
             AddToEnd(str);
-            return Iterator(tail);
+            return Iterator(tail.get());
         } else {
-            auto newNode = std::make_unique<Node>(str);
+            auto newNode = std::make_shared<Node>(str);
             Node* current = pos.node;
             newNode->prev = current->prev;
             newNode->next = std::move(current->prev->next);
             current->prev->next = std::move(newNode);
-            current->prev = current->prev->next.get();
+            current->prev = current->prev->next;
             ++size;
-            return Iterator(current->prev);
+            return Iterator(current->prev.get());
         }
     }
 

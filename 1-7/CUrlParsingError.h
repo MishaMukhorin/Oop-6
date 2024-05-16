@@ -42,17 +42,5 @@ public:
 
 };
 
-class NoNumberAfterMinusError : public std::invalid_argument {
-public:
-    explicit NoNumberAfterMinusError(int position) : std::invalid_argument(""), _position(position) {}
-
-    [[nodiscard]] int getPosition() const {
-        return _position;
-    }
-
-private:
-    int _position;
-};
-
 
 #endif //OOP_6_CURLPARSINGERROR_H
