@@ -1,27 +1,17 @@
 #include <gtest/gtest.h>
-#include "../CStringList.h"  // Include your CStringList header file
+#include "../CStringList.h"
+#include <algorithm>
 
-// Test fixture for CStringList
 class CStringListTest : public ::testing::Test {
 protected:
     CStringList list;
-
-    void SetUp() override {
-        // Code here will be called immediately after the constructor (right before each test).
-    }
-
-    void TearDown() override {
-        // Code here will be called immediately after each test (right before the destructor).
-    }
 };
 
-// Test default constructor
 TEST_F(CStringListTest, DefaultConstructor) {
     EXPECT_EQ(list.GetSize(), 0);
     EXPECT_TRUE(list.IsEmpty());
 }
 
-// Test adding elements to the beginning
 TEST_F(CStringListTest, AddToBeginning) {
     list.AddToBeginning("World");
     list.AddToBeginning("Hello");
@@ -62,7 +52,16 @@ TEST_F(CStringListTest, CopyConstructor) {
     ++it;
     EXPECT_EQ(*it, "World");
 
-    //todo проверить равенство
+    auto originalIt = list.begin();
+    auto copyIt = copyList.begin();
+    while (originalIt != list.end() && copyIt != copyList.end()) {
+        EXPECT_EQ(*originalIt, *copyIt);
+        ++originalIt;
+        ++copyIt;
+    }
+    EXPECT_EQ(originalIt, list.end());
+    EXPECT_EQ(copyIt, copyList.end());
+    //done проверить равенство
 }
 
 // Test move constructor
@@ -116,12 +115,12 @@ TEST_F(CStringListTest, MoveAssignmentOperator) {
     EXPECT_TRUE(list.IsEmpty());
 }
 
-// Test ClearList
+// Test Clear
 TEST_F(CStringListTest, ClearList) {
     list.AddToEnd("Hello");
     list.AddToEnd("World");
 
-    list.ClearList();
+    list.Clear();
 
     EXPECT_EQ(list.GetSize(), 0);
     EXPECT_TRUE(list.IsEmpty());
@@ -171,14 +170,55 @@ TEST_F(CStringListTest, Iterators) {
     EXPECT_EQ(it, list.end());
 
     auto rit = list.rbegin();
-    EXPECT_EQ(rit.node->data, "World");
+    EXPECT_EQ(rit.m_node->data, "World");
     ++rit;
-    EXPECT_EQ(rit.node->data, "Hello");
+    EXPECT_EQ(rit.m_node->data, "Hello");
     ++rit;
     EXPECT_EQ(rit, list.rend());
-} //todo test iterators
-//todo test совпместимость с стл алгоритмами итераторы и for
-//todo
+}
+
+TEST_F(CStringListTest, ConstantIterators) {
+    list.AddToEnd("Hello");
+    list.AddToEnd("World");
+
+    auto it = list.cbegin();
+    EXPECT_EQ(*it, "Hello");
+    ++it;
+    EXPECT_EQ(*it, "World");
+    ++it;
+    EXPECT_TRUE(it == list.cend());
+
+    auto rit = list.crbegin();
+    EXPECT_EQ(*rit, "World");
+    ++rit;
+    EXPECT_EQ(*rit, "Hello");
+    ++rit;
+    EXPECT_TRUE(rit == list.crend());
+}
+
+TEST_F(CStringListTest, STLCompatibility) {
+    list.AddToEnd("World");
+    list.AddToEnd("Hello");
+    list.AddToEnd("Foo");
+    list.AddToEnd("Bar");
+
+    std::transform(list.begin(), list.end(), list.begin(),
+                   [](const std::string &s) {
+                        std::string result;
+                        result.reserve(s.length());
+                        std::transform(s.begin(), s.end(), std::back_inserter(result),
+                                      [](unsigned char c) { return std::tolower(c); });
+                        return result; });
+    auto it = list.begin();
+    EXPECT_EQ(*it, "world");
+    ++it;
+    EXPECT_EQ(*it, "hello");
+    ++it;
+    EXPECT_EQ(*it, "foo");
+    ++it;
+    EXPECT_EQ(*it, "bar");
+}
+
 
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);
